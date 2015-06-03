@@ -1,0 +1,225 @@
+#include<iostream>
+#include<fstream>
+using namespace std;
+
+void cityinit(int **city,int m,int n)
+{
+	for(int i=0;i<m;i++)
+	{
+		for(int j=0;j<n;j++)
+		{
+			city[i][j]=0;
+		}
+	}
+}
+
+
+bool hasred(int **city,int m,int n,int x,int y)//if there are red houses around it,return true
+{
+	if(x-1>=0)
+	{
+		if(city[x-1][y]==1)
+			return true;
+	}
+	if(y-1>=0)
+	{
+		if(city[x][y-1]==1)
+			return true;
+	}
+	if(x+1<m)
+	{
+		if(city[x+1][y]==1)
+			return true;
+	}
+	if(y+1<n)
+	{
+		if(city[x][y+1]==1)
+			return true;
+	}
+	return false;
+}
+
+
+bool hasredgreen(int **city,int m,int n,int x, int y)//if there are red and green houses around it,return true
+{
+	bool red=false;
+	bool green=false;
+	if(x-1>=0)
+	{
+		if(city[x-1][y]==1)
+			red=true;
+		if(city[x-1][y]==2)
+			green=true;
+	}
+	if(y-1>=0)
+	{
+		if(city[x][y-1]==1)
+			red=true;
+		if(city[x][y-1]==2)
+			green=true;
+	}
+	if(x+1<m)
+	{
+		if(city[x+1][y]==1)
+			red=true;
+		if(city[x+1][y]==2)
+			green=true;
+	}
+	if(y+1<n)
+	{
+		if(city[x][y+1]==1)
+			red=true;
+		if(city[x][y+1]==2)
+			green=true;
+	}
+	return green&red;
+}
+bool judgehouseabove(int **city,int m,int n,int x,int y)//judge if the house above it is built rightly
+{
+	if(x<=0)
+		return true;
+	else
+	{
+		if(city[x-1][y]==3)
+		{
+			if(!hasredgreen(city,m,n,x-1,y))
+				return false;
+		}
+		if(city[x-1][y]==2)
+		{
+			if(!hasred(city,m,n,x-1,y))
+				return false;
+		}
+	}
+	return true;
+}
+
+bool judgefinalline(int **city,int m,int n,int x,int y)//jugde if the final line houses are built rightly
+{
+	for(int j=0;j<=y;j++)
+	{
+		if(city[x][j]==3)
+		{
+			if(!hasredgreen(city,m,n,x,j))
+				return false;
+		}
+		if(city[x][j]==2)
+		{
+			if(!hasred(city,m,n,x,j))
+				return false;
+		}
+	}
+	return true;
+}
+
+void cityconstruction(int **city,int m,int n,int p,int &max,int **answer,int total)//build the house
+{
+	if(p==m*n)
+	{
+		if(judgefinalline(city,m,n,m-1,n-1))
+		{
+			int temp=0;
+			for(int i=0;i<m;i++)
+			{
+				for(int j=0;j<n;j++)
+				{
+					temp+=city[i][j];
+				}
+			}
+			if(temp>max)
+			{
+				max=temp;
+				for(int i=0;i<m;i++)
+				{
+					for(int j=0;j<n;j++)
+					{
+						answer[i][j]=city[i][j];
+					}
+				}
+			}
+		}
+		return;
+	}
+	int x=p/n;
+	int y=p%n;
+	if(total+3+2.3*(m*n-p-1)<max)
+		return;
+	city[x][y]=3;
+	if(judgehouseabove(city,m,n,x,y))
+	{
+		cityconstruction(city,m,n,p+1,max,answer,total+3);
+	}
+	if(total+2+2.3*(m*n-p-1)<max)
+		return;
+	city[x][y]=2;
+	if(judgehouseabove(city,m,n,x,y))
+	{
+		cityconstruction(city,m,n,p+1,max,answer,total+2);
+	}
+	if(total+1+2.3*(m*n-p-1)<max)
+		return;
+	city[x][y]=1;
+	if(judgehouseabove(city,m,n,x,y))
+	{
+		cityconstruction(city,m,n,p+1,max,answer,total+1);
+	}
+}
+
+
+int main(int argc,char **argv)
+{
+	if(argc<2)
+	{
+		cout<<"need more arguments\n";
+		return 0;
+	}
+	ifstream infile(argv[1]);
+	if(!infile)
+	{
+		cout<<"can't open the input file\n";
+		return 0;
+	}
+	ofstream outfile(argv[2]);
+	if(!outfile)
+	{
+		cout<<"can't creat the output file\n";
+		return 0;
+	}
+	int runtime=0;
+	infile>>runtime;
+	for(int i=0;i<runtime;i++)
+	{
+		int m,n,max;
+		int total=0;
+		max=0;
+		infile>>m>>n;
+		int **city;
+		int **answer;
+		city=new int*[m];
+		answer=new int*[m];
+		for(int i=0;i<m;i++)
+		{
+			city[i]=new int[n];
+			answer[i]=new int[n];
+		}
+		cityinit(city,m,n);
+		cityinit(answer,m,n);
+		cityconstruction(city,m,n,0,max,answer,total);
+		outfile<<max<<'\n';
+		for(int i=0;i<m;i++)
+		{
+			for(int j=0;j<n;j++)
+			{
+				outfile<<answer[i][j]<<' ';
+			}
+			outfile<<'\n';
+		}
+		for(int i=0;i<m;i++)
+		{
+			delete [] city[i];
+			delete [] answer[i];
+		}
+		delete [] city;
+		delete [] answer;
+	}
+}
